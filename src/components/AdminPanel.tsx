@@ -856,19 +856,36 @@ export default function AdminPanel({
   const [repKegiatanId, setRepKegiatanId] = useState('Semua');
   const [repPangkalan, setRepPangkalan] = useState('Semua');
   const [repJk, setRepJk] = useState('Semua');
+  const [repTingkatan, setRepTingkatan] = useState('Semua');
 
   const repPangkalanOptions = useMemo(() => {
     return Array.from(new Set(peserta.map(p => p.namaPangkalan)));
   }, [peserta]);
 
   const filteredKehadiranReport = useMemo(() => {
+    if (repKegiatanId === 'Semua') {
+      return [];
+    }
     return kehadiran.filter(h => {
-      const matchesKegiatan = repKegiatanId === 'Semua' || h.idKegiatan === repKegiatanId;
+      const matchesKegiatan = h.idKegiatan === repKegiatanId;
       const matchesPangkalan = repPangkalan === 'Semua' || h.namaPangkalan === repPangkalan;
       const matchesJk = repJk === 'Semua' || h.jenisKelamin === repJk;
-      return matchesKegiatan && matchesPangkalan && matchesJk;
+      
+      let matchesTingkatan = true;
+      if (repTingkatan !== 'Semua') {
+        const p = peserta.find(p => p.idPeserta === h.idPeserta);
+        const actualTingkatan = p?.tingkatan || 'Penggalang SD (SD/MI)';
+        if (repTingkatan === 'SD') {
+          matchesTingkatan = actualTingkatan === 'Penggalang SD (SD/MI)';
+        } else if (repTingkatan === 'SMP') {
+          matchesTingkatan = actualTingkatan === 'Penggalang SMP (SMP/MTs)';
+        } else if (repTingkatan === 'SMA') {
+          matchesTingkatan = actualTingkatan === 'Penegak (SMA/MA/SMK)';
+        }
+      }
+      return matchesKegiatan && matchesPangkalan && matchesJk && matchesTingkatan;
     });
-  }, [kehadiran, repKegiatanId, repPangkalan, repJk]);
+  }, [kehadiran, repKegiatanId, repPangkalan, repJk, repTingkatan, peserta]);
 
   // Export report CSV
   const exportReportToCsv = () => {
@@ -919,7 +936,8 @@ export default function AdminPanel({
       await generateLaporanPDF(filteredKehadiranReport, {
         kegiatan: repKegiatanId === 'Semua' ? 'Semua Kegiatan' : repKegiatanId,
         pangkalan: repPangkalan === 'Semua' ? 'Semua Pangkalan' : repPangkalan,
-        kategori: repJk === 'Semua' ? 'Semua Kategori' : (repJk === 'Putra' ? 'Putra (Pa)' : 'Putri (Pi)')
+        kategori: repJk === 'Semua' ? 'Semua Kategori' : (repJk === 'Putra' ? 'Putra (Pa)' : 'Putri (Pi)'),
+        tingkatan: repTingkatan === 'Semua' ? 'Semua Tingkatan' : (repTingkatan === 'SD' ? 'Penggalang SD' : repTingkatan === 'SMP' ? 'Penggalang SMP' : 'Penegak (SMA)')
       }, settings);
       onAddAuditLog("Unduh Laporan Kehadiran", `Berhasil mengunduh PDF laporan kehadiran.`);
     } catch (err) {
@@ -2394,15 +2412,15 @@ export default function AdminPanel({
             </div>
 
             {/* FILTERS */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-150">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-zinc-50 dark:bg-zinc-800/50 p-4 rounded-xl border border-zinc-150">
               <div>
                 <label className="block text-[10px] uppercase font-mono font-bold text-zinc-500 mb-1">Filter Kegiatan</label>
                 <select
                   value={repKegiatanId}
                   onChange={(e) => setRepKegiatanId(e.target.value)}
-                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2"
+                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
-                  <option value="Semua">Semua Kegiatan</option>
+                  <option value="Semua">-- Pilih Kegiatan --</option>
                   {kegiatan.map(k => (
                     <option key={k.idKegiatan} value={k.idKegiatan}>[{k.idKegiatan}] {k.namaKegiatan}</option>
                   ))}
@@ -2414,7 +2432,7 @@ export default function AdminPanel({
                 <select
                   value={repPangkalan}
                   onChange={(e) => setRepPangkalan(e.target.value)}
-                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2"
+                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value="Semua">Semua Pangkalan</option>
                   {repPangkalanOptions.map(p => (
@@ -2428,11 +2446,25 @@ export default function AdminPanel({
                 <select
                   value={repJk}
                   onChange={(e) => setRepJk(e.target.value)}
-                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2"
+                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value="Semua">Semua Kategori</option>
                   <option value="Putra">Putra (Pa)</option>
                   <option value="Putri">Putri (Pi)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] uppercase font-mono font-bold text-zinc-500 mb-1">Tingkatan Peserta</label>
+                <select
+                  value={repTingkatan}
+                  onChange={(e) => setRepTingkatan(e.target.value)}
+                  className="w-full text-xs bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="Semua">Semua Tingkatan</option>
+                  <option value="SD">SD (Penggalang SD)</option>
+                  <option value="SMP">SMP (Penggalang SMP)</option>
+                  <option value="SMA">SMA (Penegak)</option>
                 </select>
               </div>
             </div>
@@ -2452,7 +2484,14 @@ export default function AdminPanel({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
-                  {filteredKehadiranReport.length > 0 ? (
+                  {repKegiatanId === 'Semua' ? (
+                    <tr key="select-activity-first">
+                      <td colSpan={7} className="p-8 text-center text-zinc-500 dark:text-zinc-400 font-medium bg-zinc-50/50 dark:bg-zinc-800/10">
+                        <span className="block text-xl mb-1">⚠️ Kegiatan Belum Dipilih</span>
+                        Silakan pilih salah satu kegiatan di filter di atas untuk memunculkan data Laporan Kehadiran.
+                      </td>
+                    </tr>
+                  ) : filteredKehadiranReport.length > 0 ? (
                     filteredKehadiranReport.map((log, index) => (
                       <tr key={log.id || `${log.idPeserta}_${log.idKegiatan}_${index}`} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-800/40 animate-fade-in">
                         <td className="p-3 font-mono text-zinc-400">{formatIndonesianDate(log.tanggal)} &bull; {formatIndonesianTime(log.jam)} WITA</td>
@@ -3351,10 +3390,51 @@ export default function AdminPanel({
                   </p>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Nama Ketua Panitia
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.namaKetua || ''}
+                      onChange={(e) => onUpdateSettings({ ...settings, namaKetua: e.target.value })}
+                      placeholder="Contoh: Kak Ruslan, S.Pd."
+                      className="w-full text-xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-750 rounded-xl p-3 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Nama Sekretaris Panitia
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.namaSekretaris || ''}
+                      onChange={(e) => onUpdateSettings({ ...settings, namaSekretaris: e.target.value })}
+                      placeholder="Contoh: Kak Nurhaliza, S.E."
+                      className="w-full text-xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-750 rounded-xl p-3 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm font-medium"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider mb-1.5">
+                      Nama Bendahara Panitia
+                    </label>
+                    <input
+                      type="text"
+                      value={settings.namaBendahara || ''}
+                      onChange={(e) => onUpdateSettings({ ...settings, namaBendahara: e.target.value })}
+                      placeholder="Contoh: Kak Rismawati, S.Pd."
+                      className="w-full text-xs bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-750 rounded-xl p-3 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 shadow-sm font-medium"
+                    />
+                  </div>
+                </div>
+
                 <div className="flex justify-end pt-2">
                   <button
                     onClick={() => {
-                      onAddAuditLog("Pembalikan Identitas Event", `Mengubah nama event: "${settings.namaEvent}", lokasi: "${settings.lokasiEvent}", pelaksana: "${settings.pelaksanaEvent}", logo: "${settings.logoUrl || ''}"`);
+                      onAddAuditLog("Pembalikan Identitas Event", `Mengubah nama event: "${settings.namaEvent}", lokasi: "${settings.lokasiEvent}", pelaksana: "${settings.pelaksanaEvent}", logo: "${settings.logoUrl || ''}", ketua: "${settings.namaKetua || ''}", sekretaris: "${settings.namaSekretaris || ''}", bendahara: "${settings.namaBendahara || ''}"`);
                       alert("Identitas Event berhasil diperbarui dan disinkronkan ke seluruh sistem!");
                     }}
                     className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
@@ -3480,7 +3560,8 @@ export default function AdminPanel({
                 <div>Filter Kegiatan: <span className="font-bold text-emerald-800">{repKegiatanId === 'Semua' ? 'Semua Kegiatan' : repKegiatanId}</span></div>
                 <div>Filter Pangkalan: <span className="font-bold text-emerald-800">{repPangkalan === 'Semua' ? 'Semua Pangkalan' : repPangkalan}</span></div>
                 <div>Kategori Regu: <span className="font-bold text-emerald-800">{repJk === 'Semua' ? 'Semua Kategori' : (repJk === 'Putra' ? 'Putra (Pa)' : 'Putri (Pi)')}</span></div>
-                <div>Total Records: <span className="font-bold text-emerald-800">{printTarget.data.length} Absensi</span></div>
+                <div>Tingkatan: <span className="font-bold text-emerald-800">{repTingkatan === 'Semua' ? 'Semua Tingkatan' : repTingkatan}</span></div>
+                <div className="col-span-2">Total Records: <span className="font-bold text-emerald-800">{printTarget.data.length} Absensi</span></div>
               </div>
 
               <table className="w-full text-left border-collapse text-xs">

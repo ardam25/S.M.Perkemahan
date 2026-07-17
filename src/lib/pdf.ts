@@ -373,7 +373,7 @@ export async function generateKartuAbsenPDF(peserta: Peserta, settings?: AppSett
  */
 export async function generateLaporanPDF(
   data: Kehadiran[],
-  filters: { kegiatan: string; pangkalan: string; kategori: string },
+  filters: { kegiatan: string; pangkalan: string; kategori: string; tingkatan?: string },
   settings?: AppSettings
 ): Promise<void> {
   const eventName = settings?.namaEvent || "Kemah Bakti & Lomba Pramuka Kwartir Bulukumpa";
@@ -453,19 +453,20 @@ export async function generateLaporanPDF(
 
   // 1. Draw Filter & Summary Box (Only on page 1)
   doc.setFillColor(243, 244, 246);
-  doc.roundedRect(12, 34, w - 24, 18, 2, 2, 'F');
+  doc.roundedRect(12, 34, w - 24, 21, 2, 2, 'F');
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(55, 65, 81);
 
-  doc.text(`Filter Kegiatan: ${filters.kegiatan}`, 16, 40);
-  doc.text(`Filter Pangkalan: ${filters.pangkalan}`, 16, 47);
-  doc.text(`Kategori Regu: ${filters.kategori}`, 105, 40);
-  doc.text(`Total Kehadiran: ${data.length} Absensi`, 105, 47);
+  doc.text(`Filter Kegiatan: ${filters.kegiatan}`, 16, 39);
+  doc.text(`Filter Pangkalan: ${filters.pangkalan}`, 16, 45);
+  doc.text(`Kategori Regu: ${filters.kategori}`, 105, 39);
+  doc.text(`Tingkatan: ${filters.tingkatan || 'Semua'}`, 105, 45);
+  doc.text(`Total Kehadiran: ${data.length} Absensi`, 16, 51);
 
   // 2. Table Render Settings
-  let y = 58;
+  let y = 60;
   const colX = [12, 44, 118, 134, 182];
   const colW = [32, 74, 16, 48, 16];
   const headers = ['Waktu Log', 'Pangkalan', 'Kategori', 'Kegiatan', 'Status'];
@@ -585,18 +586,23 @@ export async function generateLaporanPDF(
   doc.setTextColor(31, 41, 55);
 
   // Left Signature
+  const chairmanName = settings?.namaKetua || "............................................";
+  const secretaryName = settings?.namaSekretaris || "............................................";
+
   doc.text('Mengetahui,', 30, y);
   doc.setFont('helvetica', 'bold');
   doc.text('Ketua Panitia Pelaksana', 30, y + 4.5);
-  doc.line(30, y + 26, 75, y + 26); // underline for name
+  doc.text(chairmanName, 30, y + 25);
+  doc.line(30, y + 26, 85, y + 26); // underline for name
   // Left Signature bottom label removed
 
   // Right Signature
   const formattedDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  doc.text(`Bulukumpa, ${formattedDate}`, w - 75, y);
+  doc.text(`Bulukumpa, ${formattedDate}`, w - 80, y);
   doc.setFont('helvetica', 'bold');
-  doc.text('Sekretaris', w - 75, y + 4.5);
-  doc.line(w - 75, y + 26, w - 20, y + 26); // underline for name
+  doc.text('Sekretaris Panitia', w - 80, y + 4.5);
+  doc.text(secretaryName, w - 80, y + 25);
+  doc.line(w - 80, y + 26, w - 25, y + 26); // underline for name
 
   // 5. Finalize document
   doc.save(`Laporan_Absensi_Kwartir_Bulukumpa_${filters.kegiatan.replace(/\s+/g, '_')}.pdf`);
@@ -1126,17 +1132,22 @@ export async function generateJadwalKegiatanPDF(
   doc.setTextColor(31, 41, 55);
 
   // Left Signature
+  const chairmanName = settings?.namaKetua || "............................................";
+  const secretaryName = settings?.namaSekretaris || "............................................";
+
   doc.text('Mengetahui,', 30, y);
   doc.setFont('helvetica', 'bold');
   doc.text('Ketua Panitia Pelaksana', 30, y + 4.5);
-  doc.line(30, y + 26, 75, y + 26); // underline for name
+  doc.text(chairmanName, 30, y + 25);
+  doc.line(30, y + 26, 85, y + 26); // underline for name
 
   // Right Signature
   const formattedDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
-  doc.text(`Bulukumpa, ${formattedDate}`, w - 75, y);
+  doc.text(`Bulukumpa, ${formattedDate}`, w - 80, y);
   doc.setFont('helvetica', 'bold');
-  doc.text('Sekretaris', w - 75, y + 4.5);
-  doc.line(w - 75, y + 26, w - 20, y + 26); // underline for name
+  doc.text('Sekretaris Panitia', w - 80, y + 4.5);
+  doc.text(secretaryName, w - 80, y + 25);
+  doc.line(w - 80, y + 26, w - 25, y + 26); // underline for name
 
   doc.save(`Jadwal_Kegiatan_Bulukumpa_${filterLevel.replace(/\s+/g, '_')}.pdf`);
 }

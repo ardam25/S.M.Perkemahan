@@ -278,7 +278,10 @@ export default function App() {
               kwartir: data.identitasEvent.kwartir || prev.kwartir,
               lokasiEvent: data.identitasEvent.lokasiEvent || prev.lokasiEvent,
               pelaksanaEvent: data.identitasEvent.pelaksanaEvent || prev.pelaksanaEvent,
-              logoUrl: data.identitasEvent.logoUrl || prev.logoUrl || ""
+              logoUrl: data.identitasEvent.logoUrl || prev.logoUrl || "",
+              namaKetua: data.identitasEvent.namaKetua || prev.namaKetua || "",
+              namaSekretaris: data.identitasEvent.namaSekretaris || prev.namaSekretaris || "",
+              namaBendahara: data.identitasEvent.namaBendahara || prev.namaBendahara || ""
             }));
           }
           if (!silent) {
@@ -320,7 +323,10 @@ export default function App() {
               kwartir: settings.kwartir,
               lokasiEvent: settings.lokasiEvent || "",
               pelaksanaEvent: settings.pelaksanaEvent || "",
-              logoUrl: settings.logoUrl || ""
+              logoUrl: settings.logoUrl || "",
+              namaKetua: settings.namaKetua || "",
+              namaSekretaris: settings.namaSekretaris || "",
+              namaBendahara: settings.namaBendahara || ""
             })
           };
           
@@ -369,7 +375,10 @@ export default function App() {
             kwartir: settings.kwartir,
             lokasiEvent: settings.lokasiEvent || "",
             pelaksanaEvent: settings.pelaksanaEvent || "",
-            logoUrl: settings.logoUrl || ""
+            logoUrl: settings.logoUrl || "",
+            namaKetua: settings.namaKetua || "",
+            namaSekretaris: settings.namaSekretaris || "",
+            namaBendahara: settings.namaBendahara || ""
           })
         };
 

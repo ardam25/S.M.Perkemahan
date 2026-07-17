@@ -80,6 +80,9 @@ export interface AppSettings {
   pelaksanaEvent?: string;
   gasUrl?: string;
   logoUrl?: string;
+  namaKetua?: string;
+  namaSekretaris?: string;
+  namaBendahara?: string;
 }
 
 export interface Pengumuman {

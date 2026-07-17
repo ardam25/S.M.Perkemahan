@@ -204,7 +204,10 @@ export default function GasExportPanel({
             kwartir: data.identitasEvent.kwartir || settings.kwartir,
             lokasiEvent: data.identitasEvent.lokasiEvent || settings.lokasiEvent,
             pelaksanaEvent: data.identitasEvent.pelaksanaEvent || settings.pelaksanaEvent,
-            logoUrl: data.identitasEvent.logoUrl || settings.logoUrl || ""
+            logoUrl: data.identitasEvent.logoUrl || settings.logoUrl || "",
+            namaKetua: data.identitasEvent.namaKetua || settings.namaKetua || "",
+            namaSekretaris: data.identitasEvent.namaSekretaris || settings.namaSekretaris || "",
+            namaBendahara: data.identitasEvent.namaBendahara || settings.namaBendahara || ""
           });
         }
         
@@ -247,7 +250,10 @@ export default function GasExportPanel({
           kwartir: settings.kwartir,
           lokasiEvent: settings.lokasiEvent || "",
           pelaksanaEvent: settings.pelaksanaEvent || "",
-          logoUrl: settings.logoUrl || ""
+          logoUrl: settings.logoUrl || "",
+          namaKetua: settings.namaKetua || "",
+          namaSekretaris: settings.namaSekretaris || "",
+          namaBendahara: settings.namaBendahara || ""
         })
       };
 
@@ -425,8 +431,8 @@ function setupDatabase() {
       },
       {
         name: "IdentitasEvent",
-        headers: ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL"],
-        defaultData: [["Perkemahan Hari Pramuka ke 65", "Bulukumpa", "Bumi Perkemahan Anisia", "Kwartir Ranting Bulukumpa", ""]]
+        headers: ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL", "Nama Ketua", "Nama Sekretaris", "Nama Bendahara"],
+        defaultData: [["Perkemahan Hari Pramuka ke 65", "Bulukumpa", "Bumi Perkemahan Anisia", "Kwartir Ranting Bulukumpa", "", "Kak Ruslan, S.Pd.", "Kak Nurhaliza, S.E.", "Kak Rismawati, S.Pd."]]
       }
     ];
 
@@ -646,7 +652,7 @@ function getCoreData() {
     }
 
     // Tarik data IdentitasEvent
-    var eventSheet = getOrCreateSheet(db, "IdentitasEvent", ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL"], [["Perkemahan Hari Pramuka ke 65", "Bulukumpa", "Bumi Perkemahan Anisia", "Kwartir Ranting Bulukumpa", ""]]);
+    var eventSheet = getOrCreateSheet(db, "IdentitasEvent", ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL", "Nama Ketua", "Nama Sekretaris", "Nama Bendahara"], [["Perkemahan Hari Pramuka ke 65", "Bulukumpa", "Bumi Perkemahan Anisia", "Kwartir Ranting Bulukumpa", "", "Kak Ruslan, S.Pd.", "Kak Nurhaliza, S.E.", "Kak Rismawati, S.Pd."]]);
     var eRaw = eventSheet.getDataRange().getValues();
     var identitasEvent = null;
     if (eRaw.length > 1) {
@@ -655,7 +661,10 @@ function getCoreData() {
         kwartir: eRaw[1][1] || "",
         lokasiEvent: eRaw[1][2] || "",
         pelaksanaEvent: eRaw[1][3] || "",
-        logoUrl: eRaw[1][4] || ""
+        logoUrl: eRaw[1][4] || "",
+        namaKetua: eRaw[1][5] || "",
+        namaSekretaris: eRaw[1][6] || "",
+        namaBendahara: eRaw[1][7] || ""
       };
     }
 
@@ -855,16 +864,19 @@ function saveAllData(pesertaListJson, kegiatanListJson, kehadiranListJson, admin
     // 8. Save IdentitasEvent
     if (identitasEventJson) {
       var eventObj = JSON.parse(identitasEventJson);
-      var sheet = getOrCreateSheet(db, "IdentitasEvent", ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL"], [["Perkemahan Hari Pramuka ke 65", "Bulukumpa", "Bumi Perkemahan Anisia", "Kwartir Ranting Bulukumpa", ""]]);
+      var sheet = getOrCreateSheet(db, "IdentitasEvent", ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL", "Nama Ketua", "Nama Sekretaris", "Nama Bendahara"], [["Perkemahan Hari Pramuka ke 65", "Bulukumpa", "Bumi Perkemahan Anisia", "Kwartir Ranting Bulukumpa", "", "Kak Ruslan, S.Pd.", "Kak Nurhaliza, S.E.", "Kak Rismawati, S.Pd."]]);
       sheet.clearContents();
       var rows = [
-        ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL"],
+        ["Nama Event", "Kwartir", "Lokasi", "Pelaksana", "Logo URL", "Nama Ketua", "Nama Sekretaris", "Nama Bendahara"],
         [
           eventObj.namaEvent || "",
           eventObj.kwartir || "",
           eventObj.lokasiEvent || "",
           eventObj.pelaksanaEvent || "",
-          eventObj.logoUrl || ""
+          eventObj.logoUrl || "",
+          eventObj.namaKetua || "",
+          eventObj.namaSekretaris || "",
+          eventObj.namaBendahara || ""
         ]
       ];
       sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
@@ -950,7 +962,18 @@ F: Tingkatan Target
 G: Status Aktif (TRUE/FALSE)
 H: Dibuat Oleh
 
-*Catatan: Pastikan menulis persis sama pada nama Sheet & nama kolom baris pertama (A1, B1, dst) atau gunakan tombol 'Format Spreadsheet Baru' untuk membuatnya otomatis.*
+Sheet 8: IdentitasEvent (SHEET IDENTITAS EVENT & PANITIA)
+Kolom (Baris Pertama):
+A: Nama Event
+B: Kwartir
+C: Lokasi
+D: Pelaksana
+E: Logo URL
+F: Nama Ketua
+G: Nama Sekretaris
+H: Nama Bendahara
+
+*Catatan: Pastikan menulis persis sama pada nama Sheet & nama kolom baris pertama (A1, B1, dst) atau gunakan tombol 'Format Ulang Spreadsheet Baru' untuk membuatnya otomatis.*
 `;
 
   return (

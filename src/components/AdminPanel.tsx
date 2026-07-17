@@ -851,6 +851,73 @@ export default function AdminPanel({
     };
   };
 
+  const handleBulkProcessScan = (codes: string[]): { successCount: number; duplicateCount: number; errorCount: number; messages: string[] } => {
+    if (!selectedKegiatan) {
+      return { successCount: 0, duplicateCount: 0, errorCount: codes.length, messages: ["Kegiatan belum dipilih!"] };
+    }
+
+    let successCount = 0;
+    let duplicateCount = 0;
+    let errorCount = 0;
+    const messages: string[] = [];
+    const newLogs: Kehadiran[] = [];
+
+    // Let's copy current kehadiran to start checking duplicates and finding ids
+    const currentKehadiranList = [...kehadiran];
+    let nextLogNum = currentKehadiranList.reduce((max, h) => {
+      const num = parseInt(h.id.replace('LOG', ''), 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0) + 1;
+
+    codes.forEach(code => {
+      const trimmed = code.trim().toUpperCase();
+      const targetPeserta = peserta.find(p => p.idPeserta === trimmed || p.kodeQr === trimmed);
+      
+      if (!targetPeserta) {
+        errorCount++;
+        messages.push(`ID QR Tidak Dikenal: ${code}`);
+        return;
+      }
+
+      // Check duplicate check-in in existing list or in newly created list
+      const isAlreadyCheckedIn = currentKehadiranList.some(h => h.idPeserta === targetPeserta.idPeserta && h.idKegiatan === selectedKegiatan.idKegiatan) ||
+                                 newLogs.some(h => h.idPeserta === targetPeserta.idPeserta && h.idKegiatan === selectedKegiatan.idKegiatan);
+      
+      if (isAlreadyCheckedIn) {
+        duplicateCount++;
+        messages.push(`Sudah melakukan absensi: ${targetPeserta.namaPangkalan}`);
+        return;
+      }
+
+      // Insert Log
+      const now = new Date();
+      const newLog: Kehadiran = {
+        id: `LOG${String(nextLogNum).padStart(5, '0')}`,
+        tanggal: now.toISOString().split('T')[0],
+        jam: now.toTimeString().split(' ')[0].substring(0, 5),
+        idPeserta: targetPeserta.idPeserta,
+        namaPangkalan: targetPeserta.namaPangkalan,
+        jenisKelamin: targetPeserta.jenisKelamin,
+        idKegiatan: selectedKegiatan.idKegiatan,
+        namaKegiatan: selectedKegiatan.namaKegiatan,
+        statusHadir: 'Hadir',
+        petugas: currentAdmin.nama
+      };
+
+      nextLogNum++;
+      newLogs.push(newLog);
+      successCount++;
+      messages.push(`Berhasil: ${targetPeserta.namaPangkalan}`);
+    });
+
+    if (newLogs.length > 0) {
+      onUpdateKehadiran([...kehadiran, ...newLogs]);
+      onAddAuditLog("Melakukan Absensi Massal", `Petugas ${currentAdmin.nama} merekam kehadiran ${newLogs.length} peserta secara massal/sinkronisasi offline di kegiatan ${selectedKegiatan.namaKegiatan}`);
+    }
+
+    return { successCount, duplicateCount, errorCount, messages };
+  };
+
 
   // --- LAPORAN TAB STATE ---
   const [repKegiatanId, setRepKegiatanId] = useState('Semua');
@@ -2364,6 +2431,7 @@ export default function AdminPanel({
               pesertaList={peserta}
               kehadiranList={kehadiran}
               onScanSuccess={handleProcessScan}
+              onBulkScanSuccess={handleBulkProcessScan}
               isOffline={isOffline}
               onToggleOffline={onToggleOffline}
               soundEnabled={settings.soundEnabled}

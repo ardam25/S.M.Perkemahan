@@ -14,6 +14,7 @@ interface ScannerComponentProps {
   pesertaList: Peserta[];
   kehadiranList: Kehadiran[];
   onScanSuccess: (idPeserta: string) => { status: 'success' | 'warn' | 'error'; message: string; subtext?: string };
+  onBulkScanSuccess?: (idPesertas: string[]) => { successCount: number; duplicateCount: number; errorCount: number; messages: string[] };
   isOffline: boolean;
   onToggleOffline: () => void;
   soundEnabled: boolean;
@@ -27,6 +28,7 @@ export default function ScannerComponent({
   pesertaList,
   kehadiranList,
   onScanSuccess,
+  onBulkScanSuccess,
   isOffline,
   onToggleOffline,
   soundEnabled,
@@ -125,6 +127,11 @@ export default function ScannerComponent({
     const lowerQuery = schoolSearchQuery.toLowerCase();
     return uniquePangkalanList.filter(p => p.toLowerCase().includes(lowerQuery));
   }, [uniquePangkalanList, schoolSearchQuery]);
+
+  const scannedPeserta = React.useMemo(() => {
+    if (!lastScannedCode) return null;
+    return pesertaList.find(x => x.idPeserta === lastScannedCode || x.kodeQr === lastScannedCode) || null;
+  }, [lastScannedCode, pesertaList]);
 
   // Group the pangkalan list by their level (tingkatan)
   const groupedPangkalan = React.useMemo(() => {
@@ -664,14 +671,20 @@ export default function ScannerComponent({
       }
     });
     
-    uniqueQueue.forEach(code => {
-      const result = onScanSuccess(code);
-      if (result.status === 'success') {
-        successCount++;
-      } else if (result.status === 'warn') {
-        duplicateCount++;
-      }
-    });
+    if (onBulkScanSuccess) {
+      const result = onBulkScanSuccess(uniqueQueue);
+      successCount += result.successCount;
+      duplicateCount += result.duplicateCount;
+    } else {
+      uniqueQueue.forEach(code => {
+        const result = onScanSuccess(code);
+        if (result.status === 'success') {
+          successCount++;
+        } else if (result.status === 'warn') {
+          duplicateCount++;
+        }
+      });
+    }
 
     const msg = `Sinkronisasi Selesai! ${successCount} Hadir Baru, ${duplicateCount} Terlewati (Duplikat).`;
     setScanResult({
@@ -1242,8 +1255,12 @@ export default function ScannerComponent({
                 }`}>
                   <span className="text-xs font-mono tracking-widest uppercase opacity-75 mb-1">Status Absensi</span>
                   <span className="text-3xl font-black tracking-wider mb-2">{scanResult.title}</span>
-                  <span className="text-base font-bold leading-snug">{scanResult.message}</span>
-                  <span className="text-xs mt-1.5 opacity-80">{scanResult.subtext}</span>
+                  <span className="text-lg font-extrabold leading-snug text-red-600 dark:text-red-500 uppercase tracking-wide">
+                    {scannedPeserta ? scannedPeserta.namaPangkalan : scanResult.message}
+                  </span>
+                  <span className="text-xs mt-1.5 opacity-80 font-bold uppercase tracking-wider">
+                    {scannedPeserta ? (scannedPeserta.jenisKelamin === 'Putra' ? 'PUTRA' : 'PUTRI') : scanResult.subtext}
+                  </span>
                   <span className="text-[10px] mt-3 bg-black/5 dark:bg-white/10 px-2 py-0.5 rounded font-mono">{scanResult.timestamp}</span>
                 </div>
               </div>

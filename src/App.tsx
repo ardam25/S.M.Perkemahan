@@ -8,7 +8,7 @@ import {
   Shield, Moon, Sun, Monitor, LogIn, Key, Compass, Users, Clock, AlertTriangle, AlertCircle, Sparkles, X, UserCheck, Megaphone, Volume2
 } from 'lucide-react';
 
-import { Peserta, Kegiatan, Kehadiran, Admin, AuditLog, AppSettings, Pengumuman, PangkalanDetail, DokumenKegiatan, formatIndonesianDate, formatIndonesianTime } from './types';
+import { Peserta, Kegiatan, Kehadiran, Admin, AuditLog, AppSettings, Pengumuman, PangkalanDetail, DokumenKegiatan, formatIndonesianDate, formatIndonesianTime, formatIndonesianPhoneNumber } from './types';
 import {
   defaultPeserta, defaultKegiatan, defaultKehadiran, defaultAdmins, defaultAuditLogs, defaultSettings, defaultAnnouncements, defaultDokumenKegiatan
 } from './data/defaultData';
@@ -111,10 +111,24 @@ export default function App() {
     return local ? JSON.parse(local) : defaultDokumenKegiatan;
   });
 
-  const [pangkalanDetails, setPangkalanDetails] = useState<PangkalanDetail[]>(() => {
+  const [pangkalanDetails, setRawPangkalanDetails] = useState<PangkalanDetail[]>(() => {
     const local = localStorage.getItem('pramuka_pangkalan_details');
-    return local ? JSON.parse(local) : [];
+    const parsed = local ? JSON.parse(local) : [];
+    return parsed.map((detail: any) => ({
+      ...detail,
+      hpPembina: formatIndonesianPhoneNumber(detail.hpPembina)
+    }));
   });
+
+  const setPangkalanDetails = (value: React.SetStateAction<PangkalanDetail[]>) => {
+    setRawPangkalanDetails(prev => {
+      const resolved = typeof value === 'function' ? value(prev) : value;
+      return resolved.map((detail: any) => ({
+        ...detail,
+        hpPembina: formatIndonesianPhoneNumber(detail.hpPembina)
+      }));
+    });
+  };
 
   const [isOffline, setIsOffline] = useState<boolean>(false);
   const [playingId, setPlayingId] = useState<string | null>(null);

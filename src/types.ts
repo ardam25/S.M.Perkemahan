@@ -185,4 +185,26 @@ export function formatIndonesianTime(timeStr: string): string {
   return str;
 }
 
+export function formatIndonesianPhoneNumber(phone: any): string {
+  if (phone === undefined || phone === null) return '';
+  let str = String(phone).trim();
+  if (!str) return '';
+  
+  // Clean all non-digits
+  let digits = str.replace(/\D/g, '');
+  if (!digits) return str;
+  
+  // If starts with 62, replace with 0
+  if (digits.startsWith('62')) {
+    digits = '0' + digits.substring(2);
+  }
+  // If it doesn't start with 0, add 0
+  else if (!digits.startsWith('0')) {
+    digits = '0' + digits;
+  }
+  
+  return digits;
+}
+
+
 

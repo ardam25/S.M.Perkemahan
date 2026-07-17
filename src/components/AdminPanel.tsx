@@ -42,6 +42,7 @@ interface AdminPanelProps {
   onAddAuditLog: (aktivitas: string, detail: string) => void;
   onLogout: () => void;
   onPullData?: (silent?: boolean) => Promise<boolean>;
+  onPushData?: (silent?: boolean) => Promise<boolean>;
 }
 
 type AdminTab = 'dashboard' | 'peserta' | 'kegiatan' | 'absensi' | 'laporan' | 'pengumuman' | 'dokumen' | 'pengaturan' | 'gas';
@@ -69,7 +70,8 @@ export default function AdminPanel({
   onUpdateDocuments,
   onAddAuditLog,
   onLogout,
-  onPullData
+  onPullData,
+  onPushData
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
@@ -2438,6 +2440,7 @@ export default function AdminPanel({
               onToggleSound={() => onUpdateSettings({ ...settings, soundEnabled: !settings.soundEnabled })}
               speechEnabled={settings.speechEnabled}
               onToggleSpeech={() => onUpdateSettings({ ...settings, speechEnabled: !settings.speechEnabled })}
+              onPushData={onPushData}
             />
           </div>
         )}

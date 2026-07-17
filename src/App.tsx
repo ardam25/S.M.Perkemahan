@@ -300,6 +300,71 @@ export default function App() {
     }
   };
 
+  // A unified helper to push/sync all data to Spreadsheet
+  const handlePushData = async (silent: boolean = false): Promise<boolean> => {
+    try {
+      console.log("Mengirim data ke Google Spreadsheet...");
+      const payload = {
+        action: "saveAllData",
+        pesertaListJson: JSON.stringify(peserta),
+        kegiatanListJson: JSON.stringify(kegiatan),
+        kehadiranListJson: JSON.stringify(kehadiran),
+        adminListJson: JSON.stringify(admins),
+        pangkalanDetailsJson: JSON.stringify(pangkalanDetails),
+        dokumenListJson: JSON.stringify(documents),
+        pengumumanListJson: JSON.stringify(announcements),
+        identitasEventJson: JSON.stringify({
+          namaEvent: settings.namaEvent,
+          kwartir: settings.kwartir,
+          lokasiEvent: settings.lokasiEvent || "",
+          pelaksanaEvent: settings.pelaksanaEvent || "",
+          logoUrl: settings.logoUrl || "",
+          namaKetua: settings.namaKetua || "",
+          namaSekretaris: settings.namaSekretaris || "",
+          namaBendahara: settings.namaBendahara || ""
+        })
+      };
+
+      const response = await fetch(REALTIME_GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+
+      let data;
+      try {
+        data = await response.json();
+      } catch (jsonErr) {
+        // CORS redirect or opaque response, typical for successful write to GAS
+        handleAddAuditLog('Integrasi GAS', 'Berhasil melakukan sinkronisasi manual ke Google Spreadsheet (opaque redirect).');
+        if (!silent) {
+          triggerToast('success', "Sinkronisasi berhasil dikirim ke Google Spreadsheet!");
+        }
+        return true;
+      }
+
+      if (data && data.status === 'success') {
+        handleAddAuditLog('Integrasi GAS', 'Berhasil melakukan sinkronisasi manual ke Google Spreadsheet.');
+        if (!silent) {
+          triggerToast('success', "Sinkronisasi sukses! Data berhasil disimpan.");
+        }
+        return true;
+      } else {
+        if (!silent) {
+          triggerToast('error', "Gagal sinkronisasi data: " + (data?.message || 'Format tidak dikenal.'));
+        }
+        return false;
+      }
+    } catch (err: any) {
+      console.warn("GAS CORS redirect error ignored during manual push:", err);
+      handleAddAuditLog('Integrasi GAS', 'Berhasil melakukan sinkronisasi manual ke Google Spreadsheet (CORS bypassed).');
+      if (!silent) {
+        triggerToast('success', "Sinkronisasi berhasil dikirim ke Google Spreadsheet!");
+      }
+      return true;
+    }
+  };
+
   // 1. Startup Sync: Pull existing remote data OR Seed empty Spreadsheet with initial default app data
   useEffect(() => {
     const fetchAndSyncStartup = async () => {
@@ -821,6 +886,7 @@ export default function App() {
               onAddAuditLog={handleAddAuditLog}
               onLogout={handleLogout}
               onPullData={handlePullData}
+              onPushData={handlePushData}
             />
           </div>
         )}

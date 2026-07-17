@@ -21,6 +21,7 @@ interface ScannerComponentProps {
   onToggleSound: () => void;
   speechEnabled: boolean;
   onToggleSpeech: () => void;
+  onPushData?: (silent?: boolean) => Promise<boolean>;
 }
 
 export default function ScannerComponent({
@@ -34,7 +35,8 @@ export default function ScannerComponent({
   soundEnabled,
   onToggleSound,
   speechEnabled,
-  onToggleSpeech
+  onToggleSpeech,
+  onPushData
 }: ScannerComponentProps) {
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
@@ -108,6 +110,19 @@ export default function ScannerComponent({
   const [lastScannedTime, setLastScannedTime] = useState<number>(0);
   const [fileScanning, setFileScanning] = useState<boolean>(false);
   const [schoolSearchQuery, setSchoolSearchQuery] = useState<string>('');
+  const [isSyncingSpreadsheet, setIsSyncingSpreadsheet] = useState<boolean>(false);
+
+  const handleManualSyncSpreadsheet = async () => {
+    if (!onPushData) return;
+    setIsSyncingSpreadsheet(true);
+    try {
+      await onPushData(false);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSyncingSpreadsheet(false);
+    }
+  };
 
   // List of all unique school/base names filtered by activeKegiatan's levels (tingkatan)
   const uniquePangkalanList = React.useMemo(() => {
@@ -1315,11 +1330,25 @@ export default function ScannerComponent({
               Status kehadiran regu Putra (Pa) & Putri (Pi)
             </p>
           </div>
-          {schoolStats && (
-            <div className="text-xs bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 font-bold px-2.5 py-1 rounded-lg border border-emerald-100/50 dark:border-emerald-900/40 text-right">
-              Hadir: {schoolStats.totalPresent} / {schoolStats.totalExpected} regu
-            </div>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {onPushData && (
+              <button
+                type="button"
+                onClick={handleManualSyncSpreadsheet}
+                disabled={isSyncingSpreadsheet}
+                className="text-xs bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 font-bold px-2.5 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 flex items-center gap-1.5 transition-all disabled:opacity-50 cursor-pointer"
+                title="Kirim semua data kehadiran saat ini ke Spreadsheet"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSpreadsheet ? 'animate-spin' : ''}`} />
+                {isSyncingSpreadsheet ? 'Menyimpan...' : 'Sinkron ke Spreadsheet'}
+              </button>
+            )}
+            {schoolStats && (
+              <div className="text-xs bg-emerald-50 dark:bg-emerald-950/20 text-emerald-800 dark:text-emerald-400 font-bold px-2.5 py-1.5 rounded-lg border border-emerald-100/50 dark:border-emerald-900/40 text-right">
+                Hadir: {schoolStats.totalPresent} / {schoolStats.totalExpected} regu
+              </div>
+            )}
+          </div>
         </div>
 
         {!activeKegiatan ? (

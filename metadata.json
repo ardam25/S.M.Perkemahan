@@ -1,0 +1,10 @@
+{
+  "name": "SISTEM MANAJEMEN PERKEMAHAN PRAMUKA",
+  "description": "Aplikasi Monitoring Kehadiran Peserta Perkemahan Pramuka Kwartir Ranting Bulukumpa berbasis QR Code.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

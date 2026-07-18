@@ -592,7 +592,7 @@ export default function App() {
 
   const handlePesertaLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const matched = peserta.find(p => p.idPeserta.toUpperCase() === pesertaId.toUpperCase().trim());
+    const matched = peserta.find(p => String(p.idPeserta || '').toUpperCase() === String(pesertaId || '').toUpperCase().trim());
     
     if (matched) {
       if (!matched.statusAktif) {

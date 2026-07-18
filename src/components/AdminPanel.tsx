@@ -122,6 +122,27 @@ export default function AdminPanel({
     }
   };
 
+  const [isSyncingKehadiran, setIsSyncingKehadiran] = useState(false);
+
+  const handleSyncKehadiran = async () => {
+    if (!onPushData) return;
+    setIsSyncingKehadiran(true);
+    try {
+      const success = await onPushData(false);
+      if (success) {
+        onAddAuditLog("Sinkron Kehadiran", "Data kehadiran berhasil disinkronkan ke Google Spreadsheet.");
+        showCustomAlert("Sinkronisasi Sukses", "Seluruh data kehadiran berhasil dikirim dan disinkronkan ke Google Spreadsheet.");
+      } else {
+        showCustomAlert("Sinkronisasi Gagal", "Gagal mengirimkan data kehadiran ke Google Spreadsheet.");
+      }
+    } catch (err) {
+      console.error(err);
+      showCustomAlert("Kesalahan", "Terjadi kesalahan saat menyinkronkan data kehadiran.");
+    } finally {
+      setIsSyncingKehadiran(false);
+    }
+  };
+
   // --- ANNOUNCEMENT MANAGEMENT STATES & HANDLERS ---
   const [announcementSearch, setAnnouncementSearch] = useState('');
   const [announcementTargetFilter, setAnnouncementTargetFilter] = useState<'Semua' | 'Penggalang SD (SD/MI)' | 'Penggalang SMP (SMP/MTs)' | 'Penegak (SMA/MA/SMK)' | 'Semua_Filter'>('Semua_Filter');
@@ -2571,14 +2592,15 @@ export default function AdminPanel({
               </div>
 
               <div className="flex gap-2">
-                {onPullData && (
+                {onPushData && (
                   <button
-                    onClick={handleManualSync}
-                    disabled={isManualSyncing}
-                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold py-2 px-3 rounded-xl flex items-center gap-1 transition-colors"
+                    onClick={handleSyncKehadiran}
+                    disabled={isSyncingKehadiran}
+                    className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold py-2 px-3 rounded-xl flex items-center gap-1 transition-colors"
+                    title="Kirim dan sinkronkan data kehadiran saat ini ke Google Spreadsheet"
                   >
-                    <RefreshCw className={`w-4 h-4 ${isManualSyncing ? 'animate-spin' : ''}`} />
-                    {isManualSyncing ? 'Menarik...' : 'Tarik Data Terbaru'}
+                    <RefreshCw className={`w-4 h-4 ${isSyncingKehadiran ? 'animate-spin' : ''}`} />
+                    {isSyncingKehadiran ? 'Sinkronisasi...' : 'Sinkron Data'}
                   </button>
                 )}
                 <button

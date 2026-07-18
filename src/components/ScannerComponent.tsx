@@ -22,6 +22,7 @@ interface ScannerComponentProps {
   speechEnabled: boolean;
   onToggleSpeech: () => void;
   onPushData?: (silent?: boolean) => Promise<boolean>;
+  onPullData?: (silent?: boolean) => Promise<boolean>;
 }
 
 export default function ScannerComponent({
@@ -36,7 +37,8 @@ export default function ScannerComponent({
   onToggleSound,
   speechEnabled,
   onToggleSpeech,
-  onPushData
+  onPushData,
+  onPullData
 }: ScannerComponentProps) {
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [selectedCameraId, setSelectedCameraId] = useState<string>('');
@@ -111,6 +113,7 @@ export default function ScannerComponent({
   const [fileScanning, setFileScanning] = useState<boolean>(false);
   const [schoolSearchQuery, setSchoolSearchQuery] = useState<string>('');
   const [isSyncingSpreadsheet, setIsSyncingSpreadsheet] = useState<boolean>(false);
+  const [isPulling, setIsPulling] = useState<boolean>(false);
 
   const handleManualSyncSpreadsheet = async () => {
     if (!onPushData) return;
@@ -121,6 +124,21 @@ export default function ScannerComponent({
       console.error(err);
     } finally {
       setIsSyncingSpreadsheet(false);
+    }
+  };
+
+  const handleRefreshBarcodeDb = async () => {
+    if (!onPullData) return;
+    setIsPulling(true);
+    try {
+      const success = await onPullData(false);
+      if (success) {
+        announceVoice("Database barcode berhasil diperbarui");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsPulling(false);
     }
   };
 
@@ -145,7 +163,11 @@ export default function ScannerComponent({
 
   const scannedPeserta = React.useMemo(() => {
     if (!lastScannedCode) return null;
-    return pesertaList.find(x => x.idPeserta === lastScannedCode || x.kodeQr === lastScannedCode) || null;
+    const searchCode = String(lastScannedCode).trim().toUpperCase();
+    return pesertaList.find(x => 
+      String(x.idPeserta || '').trim().toUpperCase() === searchCode || 
+      String(x.kodeQr || '').trim().toUpperCase() === searchCode
+    ) || null;
   }, [lastScannedCode, pesertaList]);
 
   // Group the pangkalan list by their level (tingkatan)
@@ -540,7 +562,7 @@ export default function ScannerComponent({
 
   // Core processing logic when a QR code string is obtained
   const handleDecodedText = (code: string) => {
-    const trimmedCode = code.trim();
+    const trimmedCode = code.trim().toUpperCase();
     if (!trimmedCode) return;
 
     // Prevention of double scan in tight loops (batch mode throttle of 2.5s)
@@ -567,11 +589,18 @@ export default function ScannerComponent({
 
     // If offline mode is enabled, let's store it locally
     if (isOffline) {
-      const peserta = pesertaList.find(p => p.idPeserta === trimmedCode || p.kodeQr === trimmedCode);
+      const peserta = pesertaList.find(p => 
+        String(p.idPeserta || '').trim().toUpperCase() === trimmedCode || 
+        String(p.kodeQr || '').trim().toUpperCase() === trimmedCode
+      );
       if (peserta) {
         // Check if already in queue (only keep 1 data per participant)
         const isDuplicate = offlineQueue.some(item => {
-          const p = pesertaList.find(x => x.idPeserta === item || x.kodeQr === item);
+          const p = pesertaList.find(x => {
+            const trimmedItem = String(item).trim().toUpperCase();
+            return String(x.idPeserta || '').trim().toUpperCase() === trimmedItem || 
+                   String(x.kodeQr || '').trim().toUpperCase() === trimmedItem;
+          });
           return p && p.idPeserta === peserta.idPeserta;
         });
 
@@ -633,7 +662,12 @@ export default function ScannerComponent({
     } else if (result.status === 'warn') {
       announceVoice("Sudah absen");
     } else {
-      announceVoice("Kode QR tidak terdaftar");
+      // Speak the actual error message to be highly specific and accurate
+      if (result.message && result.message.toLowerCase().includes("tidak dikenal")) {
+        announceVoice("Kode QR tidak terdaftar");
+      } else {
+        announceVoice(result.message || "Kode QR tidak terdaftar");
+      }
     }
 
     // If batchMode is false, stop scanner automatically after single scan
@@ -673,7 +707,11 @@ export default function ScannerComponent({
     const seenPesertaIds = new Set<string>();
 
     offlineQueue.forEach(code => {
-      const peserta = pesertaList.find(p => p.idPeserta === code || p.kodeQr === code);
+      const peserta = pesertaList.find(p => {
+        const trimmedCode = String(code).trim().toUpperCase();
+        return String(p.idPeserta || '').trim().toUpperCase() === trimmedCode || 
+               String(p.kodeQr || '').trim().toUpperCase() === trimmedCode;
+      });
       if (peserta) {
         if (!seenPesertaIds.has(peserta.idPeserta)) {
           seenPesertaIds.add(peserta.idPeserta);
@@ -716,7 +754,41 @@ export default function ScannerComponent({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" id="monitoring-scanner-section">
+    <div className="space-y-6">
+      {/* Database Barcode Sync Status Card */}
+      <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 p-5 rounded-2xl shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+            <Barcode className="w-6 h-6" />
+          </div>
+          <div>
+            <h4 className="font-bold text-sm text-zinc-800 dark:text-zinc-200 uppercase tracking-wider flex items-center gap-2">
+              Database Barcode & QR Code
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300">
+                {pesertaList.length} Terdaftar
+              </span>
+            </h4>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Perbaharui data barcode/QR peserta secara langsung untuk menyesuaikan dengan isian spreadsheet atau data kartu absen terbaru.
+            </p>
+          </div>
+        </div>
+
+        {onPullData && (
+          <button
+            onClick={handleRefreshBarcodeDb}
+            disabled={isPulling}
+            className="w-full md:w-auto px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-zinc-100 dark:disabled:bg-zinc-800/50 disabled:text-zinc-400 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/10 flex items-center justify-center gap-2 transition-all shrink-0"
+            id="btn-refresh-barcode-db"
+            title="Klik untuk memperbaharui database barcode dari Google Spreadsheet"
+          >
+            <RefreshCw className={`w-4 h-4 ${isPulling ? 'animate-spin' : ''}`} />
+            {isPulling ? 'Memperbaharui...' : 'Perbaharui Database Barcode'}
+          </button>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6" id="monitoring-scanner-section">
       {/* SCANNER VIEWPORT */}
       <div className="lg:col-span-7 lg:self-start bg-white dark:bg-zinc-900 rounded-2xl border border-emerald-100 dark:border-zinc-800 p-6 shadow-sm flex flex-col justify-start">
         {/* TAB PILIHAN METODE SCANNER */}
@@ -1519,6 +1591,7 @@ export default function ScannerComponent({
           </>
         )}
       </div>
+    </div>
     </div>
   );
 }

@@ -8,7 +8,7 @@ import {
   Users, Calendar, CheckSquare, FileBarChart2, Settings, Code2, LogOut,
   Plus, Edit2, Trash2, Search, Filter, Download, Upload, Printer, AlertTriangle,
   UserPlus, Shield, Activity, RefreshCw, Eye, Check, AlertCircle, FileText, Megaphone, Volume2, X,
-  Home, School, UserCheck, ExternalLink, Award
+  Home, School, UserCheck, ExternalLink, Award, QrCode
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Peserta, Kegiatan, Kehadiran, Admin, AuditLog, AppSettings, Pengumuman, PangkalanDetail, DokumenKegiatan, formatIndonesianDate, formatIndonesianTime } from '../types';
@@ -841,7 +841,10 @@ export default function AdminPanel({
     }
 
     const trimmed = code.trim().toUpperCase();
-    const targetPeserta = peserta.find(p => p.idPeserta === trimmed || p.kodeQr === trimmed);
+    const targetPeserta = peserta.find(p => 
+      String(p.idPeserta || '').trim().toUpperCase() === trimmed || 
+      String(p.kodeQr || '').trim().toUpperCase() === trimmed
+    );
     
     if (!targetPeserta) {
       return { status: 'error', message: "ID QR Tidak Dikenal", subtext: "Peserta tidak terdaftar di database." };
@@ -906,7 +909,10 @@ export default function AdminPanel({
 
     codes.forEach(code => {
       const trimmed = code.trim().toUpperCase();
-      const targetPeserta = peserta.find(p => p.idPeserta === trimmed || p.kodeQr === trimmed);
+      const targetPeserta = peserta.find(p => 
+        String(p.idPeserta || '').trim().toUpperCase() === trimmed || 
+        String(p.kodeQr || '').trim().toUpperCase() === trimmed
+      );
       
       if (!targetPeserta) {
         errorCount++;
@@ -1741,7 +1747,7 @@ export default function AdminPanel({
                     <th className="p-3 font-semibold">Nama Pangkalan / Gugus Depan</th>
                     <th className="p-3 font-semibold">Tingkatan</th>
                     <th className="p-3 font-semibold">Kategori</th>
-                    <th className="p-3 font-semibold">Tanggal Daftar</th>
+                    <th className="p-3 font-semibold font-mono">Kode QR</th>
                     <th className="p-3 font-semibold">Status</th>
                     <th className="p-3 font-semibold text-center">Aksi</th>
                   </tr>
@@ -1773,7 +1779,11 @@ export default function AdminPanel({
                             {p.jenisKelamin === 'Putra' ? 'Putra (Pa)' : 'Putri (Pi)'}
                           </span>
                         </td>
-                        <td className="p-3 font-mono text-zinc-400">{p.tanggalDaftar}</td>
+                        <td className="p-3">
+                          <span className="px-2.5 py-1 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 font-mono text-xs border border-zinc-200 dark:border-zinc-700 tracking-wide">
+                            {p.kodeQr || '-'}
+                          </span>
+                        </td>
                         <td className="p-3">
                           <span className={`inline-block w-2.5 h-2.5 rounded-full ${p.statusAktif ? 'bg-emerald-500' : 'bg-zinc-300'}`}></span>
                         </td>
@@ -1792,6 +1802,13 @@ export default function AdminPanel({
                               title="Tampilkan & Cetak QR"
                             >
                               <Printer className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handlePrintKartuAbsen(p)}
+                              className="p-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/40 rounded text-emerald-600 dark:text-emerald-400"
+                              title="Generate QR Code & Unduh Kartu PDF"
+                            >
+                              <QrCode className="w-3.5 h-3.5" />
                             </button>
                             <button
                               onClick={() => handleOpenPesertaModal('edit', p)}
@@ -1857,7 +1874,7 @@ export default function AdminPanel({
                     {/* QR Code Container */}
                     <div className="bg-white p-4 rounded-2xl border border-zinc-200/80 dark:border-zinc-800 flex items-center justify-center shrink-0 w-44 h-44 shadow-lg">
                       <img
-                        src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${selectedPesertaForQr.idPeserta}`}
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(selectedPesertaForQr.kodeQr || selectedPesertaForQr.idPeserta)}`}
                         alt="QR Code"
                         className="w-full h-full object-contain"
                         referrerPolicy="no-referrer"
@@ -1878,6 +1895,10 @@ export default function AdminPanel({
                           <span className="font-bold text-emerald-700 dark:text-emerald-400">{selectedPesertaForQr.idPeserta}</span>
                         </div>
                         <div className="flex justify-between gap-4">
+                          <span>Kode QR di Tabel:</span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400">{selectedPesertaForQr.kodeQr || selectedPesertaForQr.idPeserta}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
                           <span>Kategori:</span>
                           <span className="font-semibold text-zinc-800 dark:text-zinc-200">{selectedPesertaForQr.jenisKelamin === 'Putra' ? 'Putra (Pa)' : 'Putri (Pi)'}</span>
                         </div>
@@ -1890,12 +1911,26 @@ export default function AdminPanel({
                   </div>
 
                   {/* Modal Footer Actions */}
-                  <div className="flex gap-3 justify-end border-t border-zinc-100 dark:border-zinc-800 pt-3">
+                  <div className="flex flex-wrap gap-2.5 justify-end border-t border-zinc-100 dark:border-zinc-800 pt-3">
                     <button
                       onClick={() => setSelectedPesertaForQr(null)}
                       className="bg-zinc-100 hover:bg-zinc-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 text-xs font-bold py-2.5 px-4 rounded-xl transition-colors"
                     >
                       Batal
+                    </button>
+                    <button
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(selectedPesertaForQr.kodeQr || selectedPesertaForQr.idPeserta)}`;
+                        link.target = '_blank';
+                        link.click();
+                        onAddAuditLog("Generate QR Code Image", `Berhasil mengunduh gambar QR Code pangkalan: "${selectedPesertaForQr.namaPangkalan}" (${selectedPesertaForQr.kodeQr || selectedPesertaForQr.idPeserta}).`);
+                      }}
+                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center gap-1.5 transition-colors shadow-md shadow-amber-600/10"
+                      title="Generate QR Code sebagai File Gambar PNG"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      Generate QR Code (PNG)
                     </button>
                     <button
                       onClick={() => {
@@ -2521,6 +2556,7 @@ export default function AdminPanel({
               speechEnabled={settings.speechEnabled}
               onToggleSpeech={() => onUpdateSettings({ ...settings, speechEnabled: !settings.speechEnabled })}
               onPushData={onPushData}
+              onPullData={onPullData}
             />
           </div>
         )}

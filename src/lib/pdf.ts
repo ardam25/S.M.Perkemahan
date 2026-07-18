@@ -328,7 +328,8 @@ export async function generateKartuAbsenPDF(peserta: Peserta, settings?: AppSett
   doc.setLineDashPattern([], 0); // Reset dash
 
   // Load and Add QR Code Image
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(peserta.idPeserta)}`;
+  const qrCodeToUse = peserta.kodeQr || peserta.idPeserta;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(qrCodeToUse)}`;
   try {
     const base64Img = await getBase64ImageFromUrl(qrUrl);
     doc.addImage(base64Img, 'JPEG', qrBoxX + 2.5, qrBoxY + 2.5, qrBoxW - 5, qrBoxH - 5);
@@ -353,9 +354,12 @@ export async function generateKartuAbsenPDF(peserta: Peserta, settings?: AppSett
   doc.text('ID REGU / KODE ABSENSI', w / 2, infoY + 8, { align: 'center' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
+  // Auto scale text size if it's too long
+  const displayCode = String(qrCodeToUse);
+  const codeFontSize = displayCode.length > 12 ? 10 : 13;
+  doc.setFontSize(codeFontSize);
   doc.setTextColor(17, 24, 39);
-  doc.text(String(peserta.idPeserta), w / 2, infoY + 17, { align: 'center' });
+  doc.text(displayCode, w / 2, infoY + 16, { align: 'center' });
 
   // 6. Footer Terms Notice
   doc.setFont('helvetica', 'italic');

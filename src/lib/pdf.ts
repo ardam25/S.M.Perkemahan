@@ -1021,7 +1021,12 @@ export async function generateJadwalKegiatanPDF(
       const textWaktu = `${keg.jamMulai || ''} - ${keg.jamSelesai || ''}`;
       const textNama = keg.namaKegiatan;
       const textTarget = keg.tingkatan && keg.tingkatan.length > 0 
-        ? keg.tingkatan.map(t => t.split(' ')[0]).join(', ')
+        ? keg.tingkatan.map(t => {
+            if (t === 'Penggalang SD (SD/MI)') return 'Penggalang SD/MI';
+            if (t === 'Penggalang SMP (SMP/MTs)') return 'Penggalang SMP/MTs';
+            if (t === 'Penegak (SMA/MA/SMK)') return 'Penegak SMA/MA/SMK';
+            return t;
+          }).join(', ')
         : 'Semua';
       const textLokasi = keg.lokasi || '-';
 

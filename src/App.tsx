@@ -592,7 +592,21 @@ export default function App() {
 
   const handlePesertaLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const matched = peserta.find(p => String(p.idPeserta || '').toUpperCase() === String(pesertaId || '').toUpperCase().trim());
+    
+    const normalizeId = (id: any): string => {
+      let str = String(id || '').trim().replace(/\s+/g, '').toUpperCase();
+      if (/^\d+\.0$/.test(str)) {
+        str = str.substring(0, str.length - 2);
+      }
+      return str;
+    };
+
+    const cleanInputId = normalizeId(pesertaId);
+    
+    const matched = peserta.find(p => {
+      const cleanDbId = normalizeId(p.idPeserta);
+      return cleanDbId === cleanInputId;
+    });
     
     if (matched) {
       if (!matched.statusAktif) {
@@ -769,9 +783,13 @@ export default function App() {
                       <input
                         type="text"
                         required
+                        autoCapitalize="off"
+                        autoCorrect="off"
+                        spellCheck="false"
+                        autoComplete="off"
                         placeholder="Contoh: PBK001"
                         value={pesertaId}
-                        onChange={(e) => setPesertaId(e.target.value)}
+                        onChange={(e) => setPesertaId(e.target.value.toUpperCase().replace(/\s+/g, ''))}
                         className="w-full text-xs font-mono bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-750 rounded-xl p-3 uppercase font-bold text-emerald-850 dark:text-emerald-400 focus:outline-none"
                       />
                       <p className="text-[10px] text-zinc-400 mt-2">

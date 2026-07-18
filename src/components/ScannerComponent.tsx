@@ -392,7 +392,7 @@ export default function ScannerComponent({
           Html5QrcodeSupportedFormats.ITF,
           Html5QrcodeSupportedFormats.PDF_417
         ],
-        useBarCodeDetectorIfSupported: false, // Forces highly reliable, fully cross-platform JS/WASM engine
+        useBarCodeDetectorIfSupported: true, // Enables high-speed hardware-accelerated native OS barcode scanning on mobile/Android Chrome!
         verbose: false
       });
       html5QrcodeRef.current = html5Qrcode;
@@ -428,9 +428,13 @@ export default function ScannerComponent({
       await html5Qrcode.start(
         camId,
         {
-          fps: 15, // 15 fps reduces processor load and makes barcode detection much more stable
+          fps: 20, // 20 fps is smoother and quicker for live scan frames
           qrbox: qrboxConfig,
-          aspectRatio: focusMode === 'barcode' ? 1.777778 : undefined
+          aspectRatio: focusMode === 'barcode' ? 1.777778 : undefined,
+          videoConstraints: {
+            width: { min: 640, ideal: 1280, max: 1920 },
+            height: { min: 480, ideal: 720, max: 1080 }
+          }
         },
         (decodedText) => {
           handleDecodedTextRef.current(decodedText);

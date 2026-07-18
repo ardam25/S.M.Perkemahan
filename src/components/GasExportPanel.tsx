@@ -1072,15 +1072,15 @@ H: Nama Bendahara
                   <Save className="w-3.5 h-3.5" />
                   Simpan URL
                 </button>
-                {urlInput !== "https://script.google.com/macros/s/AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA/exec" && (
+                {urlInput !== "https://script.google.com/macros/s/AKfycbysCFZ7wjpw3TfCkFmcNT6nh944h_hU6tyrVey7ls0vfX3QMjS2tjg5AU768kbsZI8/exec" && (
                   <button
                     id="btn-reset-spreadsheet-url"
                     onClick={() => {
                       if (confirm("Apakah Anda yakin ingin mereset URL Spreadsheet ke default?")) {
-                        setUrlInput("https://script.google.com/macros/s/AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA/exec");
+                        setUrlInput("https://script.google.com/macros/s/AKfycbysCFZ7wjpw3TfCkFmcNT6nh944h_hU6tyrVey7ls0vfX3QMjS2tjg5AU768kbsZI8/exec");
                         onUpdateSettings({
                           ...settings,
-                          gasUrl: "https://script.google.com/macros/s/AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA/exec"
+                          gasUrl: "https://script.google.com/macros/s/AKfycbysCFZ7wjpw3TfCkFmcNT6nh944h_hU6tyrVey7ls0vfX3QMjS2tjg5AU768kbsZI8/exec"
                         });
                         onAddAuditLog('Integrasi GAS', 'Mereset URL Google Apps Script ke default.');
                         alert("URL Google Apps Script telah direset ke default!");

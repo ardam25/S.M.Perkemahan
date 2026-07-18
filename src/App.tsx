@@ -95,8 +95,8 @@ export default function App() {
     const systemPrefersDark = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     const parsed: AppSettings = local ? JSON.parse(local) : { ...defaultSettings, darkTheme: systemPrefersDark };
     // Force set the URL to ensure it is immediately connected and simulation is disabled
-    if (!parsed.gasUrl || parsed.gasUrl === "" || parsed.gasUrl.includes("example.com")) {
-      parsed.gasUrl = "https://script.google.com/macros/s/AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA/exec";
+    if (!parsed.gasUrl || parsed.gasUrl === "" || parsed.gasUrl.includes("example.com") || parsed.gasUrl.includes("AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA")) {
+      parsed.gasUrl = "https://script.google.com/macros/s/AKfycbysCFZ7wjpw3TfCkFmcNT6nh944h_hU6tyrVey7ls0vfX3QMjS2tjg5AU768kbsZI8/exec";
     }
     return parsed;
   });
@@ -238,7 +238,7 @@ export default function App() {
   // --- GOOGLE SPREADSHEET AUTOMATIC REAL-TIME SYNC ENGINE ---
   const REALTIME_GAS_URL = settings.gasUrl && settings.gasUrl.trim() !== ""
     ? settings.gasUrl.trim()
-    : "https://script.google.com/macros/s/AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA/exec";
+    : "https://script.google.com/macros/s/AKfycbysCFZ7wjpw3TfCkFmcNT6nh944h_hU6tyrVey7ls0vfX3QMjS2tjg5AU768kbsZI8/exec";
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isInitialMount = useRef<boolean>(true);
 

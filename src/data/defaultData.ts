@@ -92,7 +92,7 @@ export const defaultSettings: AppSettings = {
   batchScanDelay: 2500,
   lokasiEvent: "Bumi Perkemahan Bulukumpa",
   pelaksanaEvent: "Kwartir Ranting Gerakan Pramuka Bulukumpa",
-  gasUrl: "https://script.google.com/macros/s/AKfycbzll-wwZo9pm3F1y8m0gS0Iprs2aSnO9CPK8-VmDfl7OoFU5g5paqDeEuG5R0yZl_V8UA/exec",
+  gasUrl: "https://script.google.com/macros/s/AKfycbysCFZ7wjpw3TfCkFmcNT6nh944h_hU6tyrVey7ls0vfX3QMjS2tjg5AU768kbsZI8/exec",
   namaKetua: "Kak Ruslan, S.Pd.",
   namaSekretaris: "Kak Nurhaliza, S.E.",
   namaBendahara: "Kak Rismawati, S.Pd."

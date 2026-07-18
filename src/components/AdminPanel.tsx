@@ -75,6 +75,39 @@ export default function AdminPanel({
 }: AdminPanelProps) {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
 
+  // Custom dialog state for confirmations and custom alerts (replaces native confirm/alert to bypass iframe blocks)
+  const [customDialog, setCustomDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'confirm' | 'alert';
+    onConfirm?: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'alert'
+  });
+
+  const showCustomConfirm = (title: string, message: string, onConfirm: () => void | Promise<void>) => {
+    setCustomDialog({
+      isOpen: true,
+      title,
+      message,
+      type: 'confirm',
+      onConfirm
+    });
+  };
+
+  const showCustomAlert = (title: string, message: string) => {
+    setCustomDialog({
+      isOpen: true,
+      title,
+      message,
+      type: 'alert'
+    });
+  };
+
   const [isManualSyncing, setIsManualSyncing] = useState(false);
 
   const handleManualSync = async () => {
@@ -1013,6 +1046,50 @@ export default function AdminPanel({
       console.error(err);
       alert("Gagal membuat PDF Laporan Kehadiran.");
     }
+  };
+
+  const handleDeleteFilteredReport = () => {
+    if (repKegiatanId === 'Semua') {
+      showCustomAlert("Pilih Kegiatan", "Silakan pilih kegiatan terlebih dahulu.");
+      return;
+    }
+    if (filteredKehadiranReport.length === 0) {
+      showCustomAlert("Data Kosong", "Tidak ada data kehadiran yang muncul sesuai filter.");
+      return;
+    }
+
+    showCustomConfirm(
+      "Konfirmasi Hapus Terfilter",
+      `Apakah Kakak yakin akan menghapus data kehadiran ini?\n\nTindakan ini akan menghapus semua (${filteredKehadiranReport.length}) data kehadiran terfilter saat ini dari database lokal dan Spreadsheet.`,
+      async () => {
+        const idsToDelete = new Set(filteredKehadiranReport.map(h => h.id));
+        const updatedKehadiran = kehadiran.filter(h => !idsToDelete.has(h.id));
+
+        onUpdateKehadiran(updatedKehadiran);
+        onAddAuditLog("Hapus Laporan Terfilter", `Berhasil menghapus ${filteredKehadiranReport.length} data kehadiran sesuai filter.`);
+
+        if (onPushData) {
+          await onPushData(true);
+        }
+        showCustomAlert("Berhasil", "Berhasil menghapus data terfilter dan menyelaraskan ke Google Spreadsheet.");
+      }
+    );
+  };
+
+  const handleDeleteSingleRow = (log: Kehadiran) => {
+    showCustomConfirm(
+      "Konfirmasi Hapus Kehadiran",
+      `Apakah Kakak yakin akan menghapus data kehadiran ini?\n\nDetail:\nPangkalan: ${log.namaPangkalan} (${log.jenisKelamin === 'Putra' ? 'Putra' : 'Putri'})\nKegiatan: ${log.namaKegiatan}`,
+      async () => {
+        const updatedKehadiran = kehadiran.filter(h => h.id !== log.id);
+        onUpdateKehadiran(updatedKehadiran);
+        onAddAuditLog("Hapus Kehadiran Tunggal", `Berhasil menghapus log kehadiran ${log.idPeserta} untuk ${log.namaKegiatan}.`);
+
+        if (onPushData) {
+          await onPushData(true);
+        }
+      }
+    );
   };
 
 
@@ -2479,6 +2556,16 @@ export default function AdminPanel({
                   <Download className="w-4 h-4" />
                   Ekspor Excel/CSV
                 </button>
+                {filteredKehadiranReport.length > 0 && (
+                  <button
+                    onClick={handleDeleteFilteredReport}
+                    className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-2 px-3 rounded-xl flex items-center gap-1 transition-colors"
+                    title="Hapus semua data kehadiran yang cocok dengan filter saat ini"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    Hapus Sesuai Filter ({filteredKehadiranReport.length})
+                  </button>
+                )}
               </div>
             </div>
 
@@ -2549,9 +2636,9 @@ export default function AdminPanel({
                     <th className="p-3 font-semibold font-mono">ID Peserta</th>
                     <th className="p-3 font-semibold">Nama Pangkalan</th>
                     <th className="p-3 font-semibold">Kategori</th>
-                    <th className="p-3 font-semibold">Kegiatan</th>
                     <th className="p-3 font-semibold">Status</th>
                     <th className="p-3 font-semibold">Petugas Validasi</th>
+                    <th className="p-3 font-semibold text-right">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
@@ -2577,7 +2664,6 @@ export default function AdminPanel({
                             {log.jenisKelamin === 'Putra' ? 'Putra' : 'Putri'}
                           </span>
                         </td>
-                        <td className="p-3 font-semibold text-zinc-800 dark:text-zinc-200">{log.namaKegiatan}</td>
                         <td className="p-3 font-mono font-bold">
                           {log.statusHadir === 'Tidak Hadir' ? (
                             <span className="text-red-600 dark:text-red-400">✘ Tidak Hadir</span>
@@ -2586,6 +2672,15 @@ export default function AdminPanel({
                           )}
                         </td>
                         <td className="p-3 text-zinc-400 font-mono text-[11px]">{log.petugas}</td>
+                        <td className="p-3 text-right">
+                          <button
+                            onClick={() => handleDeleteSingleRow(log)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 p-1.5 rounded transition-all cursor-pointer"
+                            title="Hapus data kehadiran"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 inline" />
+                          </button>
+                        </td>
                       </tr>
                     ))
                   ) : (
@@ -3573,6 +3668,65 @@ export default function AdminPanel({
           />
         )}
       </div>
+
+      {/* CUSTOM DIALOG MODAL (CONFIRM & ALERT) */}
+      {customDialog.isOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 shadow-2xl max-w-sm w-full space-y-4 animate-scale-in">
+            <div className="flex items-start gap-3">
+              <div className={`p-2.5 rounded-full flex-shrink-0 ${customDialog.type === 'confirm' ? 'bg-amber-100 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400' : 'bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400'}`}>
+                {customDialog.type === 'confirm' ? (
+                  <AlertTriangle className="w-5 h-5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-zinc-900 dark:text-zinc-100 text-sm">
+                  {customDialog.title}
+                </h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed mt-1 whitespace-pre-line">
+                  {customDialog.message}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-zinc-100 dark:border-zinc-800">
+              {customDialog.type === 'confirm' ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setCustomDialog(prev => ({ ...prev, isOpen: false }))}
+                    className="px-3.5 py-1.5 text-xs font-semibold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-xl transition-all cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      setCustomDialog(prev => ({ ...prev, isOpen: false }));
+                      if (customDialog.onConfirm) {
+                        await customDialog.onConfirm();
+                      }
+                    }}
+                    className="px-4 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-md shadow-red-500/10 cursor-pointer"
+                  >
+                    Ya, Hapus
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setCustomDialog(prev => ({ ...prev, isOpen: false }))}
+                  className="px-5 py-1.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-all shadow-md shadow-emerald-500/10 cursor-pointer"
+                >
+                  OK
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* HIGH-FIDELITY PRINT AREA CONTAINER */}
       {printTarget && (

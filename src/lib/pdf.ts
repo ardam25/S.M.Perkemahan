@@ -355,7 +355,7 @@ export async function generateKartuAbsenPDF(peserta: Peserta, settings?: AppSett
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(13);
   doc.setTextColor(17, 24, 39);
-  doc.text(peserta.idPeserta, w / 2, infoY + 17, { align: 'center' });
+  doc.text(String(peserta.idPeserta), w / 2, infoY + 17, { align: 'center' });
 
   // 6. Footer Terms Notice
   doc.setFont('helvetica', 'italic');

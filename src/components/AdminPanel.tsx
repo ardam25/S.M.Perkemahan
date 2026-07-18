@@ -528,9 +528,9 @@ export default function AdminPanel({
       const actualJk = p.jenisKelamin || 'Putra';
       
       const textQuery = searchPeserta.toLowerCase();
-      const matchesSearch = p.idPeserta.toLowerCase().includes(textQuery) ||
-                            p.namaPangkalan.toLowerCase().includes(textQuery) ||
-                            actualTingkatan.toLowerCase().includes(textQuery) ||
+      const matchesSearch = String(p.idPeserta || '').toLowerCase().includes(textQuery) ||
+                            String(p.namaPangkalan || '').toLowerCase().includes(textQuery) ||
+                            String(actualTingkatan || '').toLowerCase().includes(textQuery) ||
                             (actualJk === 'Putra' ? 'putra' : 'putri').includes(textQuery) ||
                             (actualJk === 'Putra' ? 'pa' : 'pi').includes(textQuery);
                             
@@ -1581,6 +1581,17 @@ export default function AdminPanel({
               </div>
 
               <div className="flex flex-wrap gap-2">
+                {onPullData && (
+                  <button
+                    onClick={handleManualSync}
+                    disabled={isManualSyncing}
+                    className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold py-2 px-3 rounded-xl flex items-center gap-1 transition-colors"
+                    title="Tarik data peserta terbaru dari Google Spreadsheet"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isManualSyncing ? 'animate-spin' : ''}`} />
+                    {isManualSyncing ? 'Menarik...' : 'Tarik Data'}
+                  </button>
+                )}
                 <button
                   onClick={() => handleOpenPesertaModal('tambah')}
                   className="bg-emerald-800 hover:bg-emerald-900 text-white text-xs font-bold py-2 px-3 rounded-xl flex items-center gap-1 transition-colors"
@@ -1996,7 +2007,6 @@ export default function AdminPanel({
                                     <th className="p-3 font-semibold w-12 text-center">NO.</th>
                                     <th className="p-3 font-semibold w-32">ID ANGGOTA</th>
                                     <th className="p-3 font-semibold">NAMA LENGKAP</th>
-                                    <th className="p-3 font-semibold">TEMPAT & TANGGAL LAHIR</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-300">
@@ -2005,13 +2015,6 @@ export default function AdminPanel({
                                       <td className="p-3 text-center text-zinc-400 font-mono">{idx + 1}</td>
                                       <td className="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-400">{ang.id}</td>
                                       <td className="p-3 font-semibold uppercase">{ang.nama}</td>
-                                      <td className="p-3">
-                                        {ang.tempatLahir}, {ang.tanggalLahir ? new Date(ang.tanggalLahir).toLocaleDateString('id-ID', {
-                                          day: 'numeric',
-                                          month: 'long',
-                                          year: 'numeric'
-                                        }) : '-'}
-                                      </td>
                                     </tr>
                                   ))}
                                 </tbody>

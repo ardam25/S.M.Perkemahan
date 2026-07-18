@@ -187,8 +187,8 @@ export default function ParticipantDashboard({
 
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMember.nama.trim() || !newMember.tempatLahir.trim() || !newMember.tanggalLahir) {
-      alert("Harap lengkapi semua data anggota!");
+    if (!newMember.nama.trim()) {
+      alert("Harap masukkan nama lengkap anggota!");
       return;
     }
     const updatedDetails = [...pangkalanDetails];
@@ -196,8 +196,8 @@ export default function ParticipantDashboard({
     const newAnggota: AnggotaPramuka = {
       id: `ANG-${Date.now()}`,
       nama: newMember.nama,
-      tempatLahir: newMember.tempatLahir,
-      tanggalLahir: newMember.tanggalLahir
+      tempatLahir: '',
+      tanggalLahir: ''
     };
     
     if (index >= 0) {
@@ -865,31 +865,6 @@ export default function ParticipantDashboard({
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-[10px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase mb-1">Tempat Lahir</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="Bulukumba"
-                        value={newMember.tempatLahir}
-                        onChange={(e) => setNewMember(p => ({ ...p, tempatLahir: e.target.value }))}
-                        className="w-full text-xs bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-750 rounded-xl p-3 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-[10px] font-mono font-bold text-zinc-400 dark:text-zinc-500 uppercase mb-1">Tanggal Lahir</label>
-                      <input
-                        type="date"
-                        required
-                        value={newMember.tanggalLahir}
-                        onChange={(e) => setNewMember(p => ({ ...p, tanggalLahir: e.target.value }))}
-                        className="w-full text-xs bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-750 rounded-xl p-2.5 text-zinc-800 dark:text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                      />
-                    </div>
-                  </div>
-
                   <button
                     type="submit"
                     className="w-full bg-indigo-650 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-sm"
@@ -948,7 +923,6 @@ export default function ParticipantDashboard({
                           <tr className="border-b border-zinc-150 dark:border-zinc-800 text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
                             <th className="py-2.5 pl-2">No</th>
                             <th className="py-2.5">Nama Anggota</th>
-                            <th className="py-2.5">Tempat, Tanggal Lahir</th>
                             <th className="py-2.5 pr-2 text-right">Aksi</th>
                           </tr>
                         </thead>
@@ -957,9 +931,6 @@ export default function ParticipantDashboard({
                             <tr key={ang.id || idx} className="group hover:bg-zinc-100 dark:hover:bg-zinc-800/60 transition-colors">
                               <td className="py-3 pl-2 font-mono text-zinc-400 font-bold">{idx + 1}</td>
                               <td className="py-3 font-semibold text-zinc-850 dark:text-zinc-100 group-hover:text-zinc-950 dark:group-hover:text-white">{ang.nama}</td>
-                              <td className="py-3 text-zinc-500 dark:text-zinc-400 group-hover:text-zinc-800 dark:group-hover:text-zinc-200">
-                                {ang.tempatLahir}, {new Date(ang.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                              </td>
                               <td className="py-3 pr-2 text-right">
                                 <button
                                   onClick={() => handleDeleteMember(ang.id)}
@@ -988,9 +959,6 @@ export default function ParticipantDashboard({
                                 {ang.nama}
                               </h5>
                             </div>
-                            <p className="text-[11px] text-zinc-500 dark:text-zinc-400 leading-normal">
-                              🎂 {ang.tempatLahir}, {new Date(ang.tanggalLahir).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                            </p>
                           </div>
                           
                           <button
